@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 class InputOutputTest {
 
-	private static final Path FILE_PATH = Path.of("abc.txt");
+	private static final Path FILE_PATH = Path.of("/Users/User/Documents/abc.txt");
 	private static final String NOT_EXIST = "doesn't exist";
 	private static final String NO_DIRECTORY = "no directory";
 

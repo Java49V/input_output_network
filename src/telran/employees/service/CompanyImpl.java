@@ -6,7 +6,6 @@ import telran.employees.dto.DepartmentSalary;
 import telran.employees.dto.Employee;
 import telran.employees.dto.SalaryDistribution;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;

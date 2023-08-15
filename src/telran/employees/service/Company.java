@@ -19,7 +19,6 @@ public interface Company {
 	default void restore(String filePath) {
 		if(Files.exists(Path.of(filePath))) {
 			try(ObjectInputStream stream = new ObjectInputStream(new FileInputStream(filePath))) {
-				@SuppressWarnings("unchecked")
 				List<Employee> employeesRestore = (List<Employee>) stream.readObject();
 				employeesRestore.forEach(e -> addEmployee(e));
 			}catch(Exception e) {

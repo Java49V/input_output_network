@@ -159,13 +159,6 @@ static Company company;
 	    }
 	}
 
-
-//	static void updateSalaryItem(InputOutput io) {
-//		//TODO
-//	}
-//	static void updateDepartmentItem(InputOutput io) {
-//		//TODO
-//	}
 	
 	
 

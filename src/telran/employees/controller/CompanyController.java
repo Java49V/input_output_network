@@ -132,7 +132,7 @@ static Company company;
 	        int newSalary = io.readInt("Enter new salary", "Invalid salary", MIN_SALARY, MAX_SALARY);
 	        Employee updatedEmployee = company.updateSalary(id, newSalary);
 	        if (updatedEmployee != null) {
-	            io.writeLine("Employee's salary has been updated:");
+	            io.writeLine("Employee's id=%d salary has been updated:");
 	            io.writeLine(updatedEmployee.toString());
 	        } else {
 	            io.writeLine("Failed to update employee's salary.");
@@ -149,7 +149,7 @@ static Company company;
 	        String newDepartment = io.readString("Enter new department", "Wrong department", departments);
 	        Employee updatedEmployee = company.updateDepartment(id, newDepartment);
 	        if (updatedEmployee != null) {
-	            io.writeLine("Employee's department has been updated:");
+	            io.writeLine("Employee's id=%d department has been updated:");
 	            io.writeLine(updatedEmployee.toString());
 	        } else {
 	            io.writeLine("Failed to update employee's department.");

@@ -41,4 +41,3 @@ static void performMethod(InputOutput io1) {
 			menu.perform(io1);
 }
 }
-

@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.function.BinaryOperator;
 
 public class TcpServerCalculator {
     static final int PORT = 5000;
@@ -68,4 +69,5 @@ public class TcpServerCalculator {
 
         return Double.toString(result);
     }
+
 }

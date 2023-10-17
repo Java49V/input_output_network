@@ -1,66 +1,52 @@
 package telran.net;
-
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
+import java.util.concurrent.atomic.AtomicInteger;
 public class TcpServer implements Runnable {
-    private int port;
-    private ApplProtocol protocol;
-    private ServerSocket serverSocket;
-    private ExecutorService executor;
-
-    public TcpServer(int port, ApplProtocol protocol, int numThreads) throws IOException {
-        this.port = port;
-        this.protocol = protocol;
-        serverSocket = new ServerSocket(port);
-        executor = Executors.newFixedThreadPool(numThreads);
-    }
-
-    @Override
-    public void run() {
-        System.out.println("Server is listening on port " + port);
-        try {
-            while (true) {
-                Socket socket = serverSocket.accept();
-                TcpClientServer clientServer = new TcpClientServer(socket, protocol);
-                executor.execute(clientServer); // Submit the task to the thread pool
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+	 static final int IDLE_TIMEOUT = 100;
+	private int port;
+	private ApplProtocol protocol;
+	private ServerSocket serverSocket;
+	AtomicInteger clientsCounter = new AtomicInteger(0);
+	int nThreads = Runtime.getRuntime().availableProcessors();
+	ExecutorService threadPool = Executors.newFixedThreadPool(nThreads);
+	boolean isShutdown = false;
+	public TcpServer(int port, ApplProtocol protocol) throws IOException {
+		this.port = port;
+		this.protocol = protocol;
+		serverSocket = new ServerSocket(port);
+		serverSocket.setSoTimeout(IDLE_TIMEOUT);
+	}
+public void shutdown() {
+	threadPool.shutdown();
+	isShutdown = true;
 }
+	@Override
+	public void run() {
+		System.out.println("Server is listening on port " + port);
+		
+			while(!isShutdown) {
+				try {
+				Socket socket = serverSocket.accept();
+				TcpClientServer clientServer =
+						new TcpClientServer(socket, protocol, this);
+				clientsCounter.incrementAndGet();
+				if(!isShutdown) {
+					threadPool.execute(clientServer);
+				}
+				} catch(SocketTimeoutException e) {
+					
+				}
+				catch(Exception e) {
+					e.printStackTrace();
+					break;
+				}
+				
+			}
+			
+		
+	}
 
-
-//import java.io.IOException;
-//import java.net.*;
-//public class TcpServer implements Runnable {
-//	private int port;
-//	private ApplProtocol protocol;
-//	private ServerSocket serverSocket;
-//	public TcpServer(int port, ApplProtocol protocol) throws IOException {
-//		this.port = port;
-//		this.protocol = protocol;
-//		serverSocket = new ServerSocket(port);
-//	}
-//
-//	@Override
-//	public void run() {
-//		System.out.println("Server is listening on port " + port);
-//		try {
-//			while(true) {
-//				Socket socket = serverSocket.accept();
-//				TcpClientServer clientServer = new TcpClientServer(socket, protocol);
-//				clientServer.run();
-//			}
-//			
-//		} catch(Exception e) {
-//			e.printStackTrace();
-//		}
-//	}
-//
-//}
+}

@@ -21,8 +21,6 @@ private static final int MAX_AGE = 75;
 private static final int MIN_AGE = 20;
 private static final int MIN_INTERVAL = 500;
 private static final int MAX_INTERVAL = 5000;
-//private static final int MIN_INTERVAL = 6000;
-//private static final int MAX_INTERVAL = 50000;
 static Company company;
 	public static ArrayList<Item> getCompanyItems(Company company) {
 		CompanyController.company = company;

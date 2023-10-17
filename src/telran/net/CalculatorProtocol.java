@@ -1,47 +1,30 @@
-//package telran.net;
-//
-//public class CalculatorProtocol implements ApplProtocol {
-//
-//	@Override
-//	public Response getResponse(Request request) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-//
-//}
-
 package telran.net;
 
-import java.io.Serializable;
 
 public class CalculatorProtocol implements ApplProtocol {
 
-    @Override
-    public Response getResponse(Request request) {
-        String requestType = request.requestType();
-        Serializable requestData = request.requestData();
+	@Override
+	public Response getResponse(Request request) {
+		Response response = null;
+		
+		try {
+			double[] operands = (double[])request.requestData();
+			String requestType = request.requestType();
+			double res = switch(requestType) {
+			case "add" -> operands[0] + operands[1];
+			case "multiply" -> operands[0] * operands[1];
+			case "divide" -> operands[0] / operands[1];
+			case "minus" -> operands[0] - operands[1];
+			default -> Double.NaN;
+			};
+			response = Double.isNaN(res) ?
+					new Response(ResponseCode.WRONG_TYPE, requestType + " is wrong request type"):
+						new Response(ResponseCode.OK, res);
+			return response;
+		} catch (Exception e) {
+			return new Response(ResponseCode.WRONG_DATA, e.getMessage());
+		}
+	}
 
-        if (requestType.equals("add")) {
-            double[] data = (double[]) requestData;
-            double result = data[0] + data[1];
-            return new Response(ResponseCode.OK, result);
-        } else if (requestType.equals("minus")) {
-            double[] data = (double[]) requestData;
-            double result = data[0] - data[1];
-            return new Response(ResponseCode.OK, result);
-        } else if (requestType.equals("multiply")) {
-            double[] data = (double[]) requestData;
-            double result = data[0] * data[1];
-            return new Response(ResponseCode.OK, result);
-        } else if (requestType.equals("divide")) {
-            double[] data = (double[]) requestData;
-            if (data[1] == 0) {
-                return new Response(ResponseCode.WRONG_DATA, "Division by zero");
-            }
-            double result = data[0] / data[1];
-            return new Response(ResponseCode.OK, result);
-        }
-
-        return new Response(ResponseCode.WRONG_TYPE, "Unknown operation");
-    }
+	
 }

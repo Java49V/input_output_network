@@ -1,6 +1,7 @@
 package telran.employees.service;
 
 import java.util.List;
+import java.util.concurrent.locks.*;
 import java.util.stream.Collectors;
 
 import telran.employees.dto.DepartmentSalary;
@@ -15,18 +16,26 @@ public class CompanyImpl implements Company {
 	TreeMap<Integer, Collection<Employee>> employeesSalary = new TreeMap<>();
 	TreeMap<LocalDate, Collection<Employee>> employeesAge = new TreeMap<>();
 	HashMap<String, Collection<Employee>> employeesDepartment = new HashMap<>();
+	ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+	Lock readLock = readWriteLock.readLock();
+	Lock writeLock = readWriteLock.writeLock();
 
 	@Override
 	public boolean addEmployee(Employee empl) {
-		boolean res = false;
-		Employee emplRes = employees.putIfAbsent(empl.id(), empl);
-		if (emplRes == null) {
-			res = true;
-			addEmployeeSalary(empl);
-			addEmployeeAge(empl);
-			addEmployeeDepartment(empl);
+		try {
+			writeLock.lock();
+			boolean res = false;
+			Employee emplRes = employees.putIfAbsent(empl.id(), empl);
+			if (emplRes == null) {
+				res = true;
+				addEmployeeSalary(empl);
+				addEmployeeAge(empl);
+				addEmployeeDepartment(empl);
+			}
+			return res;
+		} finally {
+			writeLock.unlock();
 		}
-		return res;
 	}
 
 	private <T> void addToIndex(Employee empl, T key, Map<T, Collection<Employee>> map) {
@@ -58,13 +67,18 @@ public class CompanyImpl implements Company {
 
 	@Override
 	public Employee removeEmployee(long id) {
-		Employee res = employees.remove(id);
-		if (res != null) {
-			removeEmployeeSalary(res);
-			removeEmployeeAge(res);
-			removeEmployeeDepartment(res);
+		try {
+			writeLock.lock();
+			Employee res = employees.remove(id);
+			if (res != null) {
+				removeEmployeeSalary(res);
+				removeEmployeeAge(res);
+				removeEmployeeDepartment(res);
+			}
+			return res;
+		} finally {
+			writeLock.unlock();
 		}
-		return res;
 	}
 
 	
@@ -88,7 +102,12 @@ public class CompanyImpl implements Company {
 	@Override
 	public Employee getEmployee(long id) {
 
-		return employees.get(id);
+		try {
+			readLock.lock();
+			return employees.get(id);
+		} finally {
+			readLock.unlock();
+		}
 	}
 
 	@Override
@@ -146,13 +165,17 @@ public class CompanyImpl implements Company {
 
 	@Override
 	public Employee updateSalary(long id, int newSalary) {
-		Employee empl = removeEmployee(id);
-		if(empl != null) {
-			Employee newEmployee = new Employee(id, empl.name(),
-					empl.department(), newSalary, empl.birthDate());
-			addEmployee(newEmployee);
+		try {
+			writeLock.lock();
+			Employee empl = removeEmployee(id);
+			if (empl != null) {
+				Employee newEmployee = new Employee(id, empl.name(), empl.department(), newSalary, empl.birthDate());
+				addEmployee(newEmployee);
+			}
+			return empl;
+		} finally {
+			writeLock.unlock();
 		}
-		return empl;
 	}
 
 	@Override

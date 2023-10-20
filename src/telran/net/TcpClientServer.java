@@ -9,10 +9,10 @@ public class TcpClientServer implements Runnable {
 	ObjectOutputStream output;
 	ApplProtocol protocol;
 	TcpServer tcpServer;
-	final static int TOTAL_IDLE_TIMEOUT = 30000;
+	final static int TOTAL_IDLE_TIMEOUT=30000;
 	int idleTime = 0;
-
-	public TcpClientServer(Socket socket, ApplProtocol protocol, TcpServer tcpServer) throws IOException {
+	public TcpClientServer(Socket socket, ApplProtocol protocol,
+			TcpServer tcpServer) throws IOException {
 		this.socket = socket;
 		this.socket.setSoTimeout(TcpServer.IDLE_TIMEOUT);
 		input = new ObjectInputStream(socket.getInputStream());
@@ -23,45 +23,50 @@ public class TcpClientServer implements Runnable {
 
 	@Override
 	public void run() {
-
-		while (!tcpServer.isShutdown) {
-			try {
+		
+			while(!tcpServer.isShutdown) {
+				try {
 				Request request = (Request) input.readObject();
 				Response response = protocol.getResponse(request);
 				output.writeObject(response);
-				idleTime = 0; // Reset the idle time after successfully processing a request
-			} catch (SocketTimeoutException e) {
-				idleTime += TcpServer.IDLE_TIMEOUT;
-				if (idleTime > TOTAL_IDLE_TIMEOUT && tcpServer.clientsCounter.get() > tcpServer.nThreads) {
-					try {
-						socket.close();
-
-					} catch (IOException e1) {
-						e1.printStackTrace();
+				
+				} catch(SocketTimeoutException e) {
+					idleTime += TcpServer.IDLE_TIMEOUT;
+					if(idleTime > TOTAL_IDLE_TIMEOUT &&
+							tcpServer.clientsCounter.get() > tcpServer.nThreads) {
+						try {
+							socket.close();
+							
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						System.out.println("socket closed - idle time exeeds total timeout");
+						break;
 					}
-					System.out.println("socket closed - idle time exeeds total timeout");
+					if(tcpServer.isShutdown) {
+						try {
+							socket.close();
+							
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						System.out.println("socket closed - server has been shutdown");
+						break;
+					}
+				}
+				catch(EOFException e) {
+					System.out.println("client closed normally connection");
+					break;
+				} catch(Exception e) {
+					System.out.println("client closed abnormally connection "
+				+ e.getMessage());
 					break;
 				}
-				if (tcpServer.isShutdown) {
-					try {
-						socket.close();
-
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					System.out.println("socket closed - server has been shutdown");
-					break;
-				}
-			} catch (EOFException e) {
-				System.out.println("client closed normally connection");
-				break;
-			} catch (Exception e) {
-				System.out.println("client closed abnormally connection " + e.getMessage());
-				break;
+				
+				
 			}
 			tcpServer.clientsCounter.decrementAndGet();
-
-		}
+		
 
 	}
 

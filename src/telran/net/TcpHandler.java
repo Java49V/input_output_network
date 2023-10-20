@@ -2,30 +2,33 @@ package telran.net;
 
 import java.io.*;
 import java.net.*;
-
-public class TcpHandler implements Closeable {
-	private Socket socket;
-	private ObjectOutputStream output;
-	private ObjectInputStream input;
-
-	public TcpHandler(String host, int port) throws Exception {
+public class TcpHandler implements Closeable{
+	private String host;
+	private int port;
+    private Socket socket;
+    private ObjectOutputStream output;
+    private ObjectInputStream input;
+    public TcpHandler(String host, int port) throws Exception {
+    	this.host = host;
+    	this.port = port;
+    	connect();
+    }
+	private void connect() throws UnknownHostException, IOException {
 		socket = new Socket(host, port);
-		output = new ObjectOutputStream(socket.getOutputStream());
-		input = new ObjectInputStream(socket.getInputStream());
+    	output = new ObjectOutputStream(socket.getOutputStream());
+    	input = new ObjectInputStream(socket.getInputStream());
 	}
-
 	@Override
 	public void close() throws IOException {
 		socket.close();
-
+		
 	}
-
-	private static final int MAX_RECONNECT_ATTEMPTS = 3;
-	private static final long RECONNECT_DELAY_MS = 5000;
-
-	public <T> T send(String requestType, Serializable requestData) {
+	public <T> T send(String requestType, Serializable requestData)  {
 		Request request = new Request(requestType, requestData);
-		for (int attempt = 0; attempt < MAX_RECONNECT_ATTEMPTS; attempt++) {
+		boolean running = true;
+		
+		while (running) {
+			running = false;
 			try {
 				output.writeObject(request);
 				Response response = (Response) input.readObject();
@@ -35,38 +38,22 @@ public class TcpHandler implements Closeable {
 				@SuppressWarnings("unchecked")
 				T res = (T) response.responseData();
 				return res;
-			} catch (IOException e) {
-				try {
-					close(); // Close the current broken connection
-					Thread.sleep(RECONNECT_DELAY_MS);
-					socket = new Socket(socket.getInetAddress(), socket.getPort());
-					output = new ObjectOutputStream(socket.getOutputStream());
-					input = new ObjectInputStream(socket.getInputStream());
-				} catch (InterruptedException | IOException reconnectException) {
-					// If reconnection fails, just continue to the next loop iteration
-				}
+				
 			} catch (Exception e) {
-				throw new RuntimeException(e.getMessage());
-			}
+				if(e instanceof SocketException) {
+					running = true;
+					try {
+						connect();
+					} catch (Exception e1) {
+						
+					} 
+				} else {
+					throw new RuntimeException(e.getMessage());
+				}
+				
+			} 
 		}
-		throw new RuntimeException("Failed to send request after multiple attempts");
+		return null;
 	}
-
-//	public <T> T send(String requestType, Serializable requestData)  {
-//		Request request = new Request(requestType, requestData);
-//		try {
-//			output.writeObject(request);
-//			Response response = (Response) input.readObject();
-//			if (response.code() != ResponseCode.OK) {
-//				throw new RuntimeException(response.responseData().toString());
-//			}
-//			@SuppressWarnings("unchecked")
-//			T res = (T) response.responseData();
-//			return res;
-//		} catch (Exception e) {
-//			
-//			throw new RuntimeException(e.getMessage());
-//		}
-//	}
 
 }
